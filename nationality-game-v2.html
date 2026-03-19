@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>สัญชาติเกม 🌐</title>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0818;--bg2:#130f2a;--surf:rgba(255,255,255,.07);--surf2:rgba(255,255,255,.11);
+  --border:rgba(255,255,255,.13);--text:#f0edf9;--muted:rgba(240,237,249,.55);
+  --accent:#a78bfa;--pink:#f472b6;--green:#34d399;--red:#f87171;--yellow:#fbbf24;
+  --r:14px;--rs:8px;
+}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 10%,rgba(167,139,250,.13),transparent 60%),radial-gradient(ellipse 60% 50% at 80% 90%,rgba(244,114,182,.1),transparent 60%);pointer-events:none;z-index:0}
+h1,h2,h3{font-family:'Bai Jamjuree',sans-serif}
+
+/* ── SCREENS ── */
+.screen{display:none;position:relative;z-index:1}
+.screen.on{display:block}
+
+/* ── HEADER ── */
+.hdr{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);background:rgba(10,8,24,.82);border-bottom:1px solid var(--border);padding:.75rem 0}
+.hdr-inner{max-width:900px;margin:0 auto;padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between}
+.brand{font-family:'Bai Jamjuree',sans-serif;font-weight:700;font-size:1.1rem;color:var(--accent)}
+.hdr-player{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.5rem}
+.hdr-score{font-family:'Bai Jamjuree',sans-serif;font-weight:700;color:var(--accent);font-size:.9rem}
+
+/* ── CONTAINER ── */
+.wrap{max-width:900px;margin:0 auto;padding:2rem 1.25rem 4rem}
+
+/* ── CARDS ── */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;backdrop-filter:blur(12px)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.7rem 1.6rem;border-radius:50px;font-family:'Bai Jamjuree',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surf);color:var(--text);transition:all .2s}
+.btn:hover{background:var(--surf2)}
+.btn-p{background:linear-gradient(135deg,var(--accent),var(--pink));color:#fff;border:none;box-shadow:0 4px 20px rgba(167,139,250,.32)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(167,139,250,.45)}
+.btn:disabled{opacity:.38;cursor:not-allowed;transform:none!important}
+
+/* ── INPUT ── */
+.inp{width:100%;background:var(--surf);border:1.5px solid var(--border);border-radius:var(--rs);padding:.85rem 1.15rem;color:var(--text);font-family:'Sarabun',sans-serif;font-size:1rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.inp::placeholder{color:var(--muted)}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(167,139,250,.22)}
+
+/* ── PROGRESS ── */
+.pbar{width:100%;height:7px;background:var(--surf);border-radius:50px;overflow:hidden;margin-bottom:1.25rem}
+.pfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--pink));border-radius:50px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 20px rgba(167,139,250,.3)}50%{box-shadow:0 0 40px rgba(167,139,250,.6)}}
+@keyframes confetti{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+.fu{animation:fadeUp .45s ease forwards}
+.d1{animation-delay:.08s} .d2{animation-delay:.16s} .d3{animation-delay:.24s} .d4{animation-delay:.32s}
+
+/* ══════════════════════════════════
+   SCREEN 1 — LANDING (3D)
+══════════════════════════════════ */
+#sLand{min-height:100vh;display:none}
+#sLand.on{display:flex;flex-direction:column}
+#threeCanvas{width:100%;height:380px;display:block;cursor:grab}
+#threeCanvas:active{cursor:grabbing}
+.land-bottom{padding:1.5rem 1.25rem 3rem;max-width:520px;margin:0 auto;width:100%;text-align:center}
+.big-title{font-size:clamp(2rem,6vw,3.2rem);font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.35rem}
+.tagline{color:var(--muted);font-size:.95rem;line-height:1.7;margin-bottom:1.5rem}
+.name-row{display:flex;gap:.65rem}
+
+/* ══════════════════════════════════
+   SCREEN 2 — ROLE SELECT
+══════════════════════════════════ */
+.roles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-bottom:1.5rem}
+.role-card{cursor:pointer;border-radius:var(--r);padding:1.3rem;background:var(--surf);border:2px solid var(--border);transition:all .22s;position:relative;overflow:hidden}
+.role-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(167,139,250,.2)}
+.role-card.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(167,139,250,.25)}
+.rc-check{position:absolute;top:.8rem;right:.8rem;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--pink));display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#fff;opacity:0;transform:scale(0);transition:all .22s}
+.role-card.sel .rc-check{opacity:1;transform:scale(1)}
+.re{font-size:2.4rem;display:block;margin-bottom:.6rem}
+.rn{font-family:'Bai Jamjuree',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:.3rem}
+.rd{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.75rem}
+.rb{display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .6rem;border-radius:50px;font-size:.72rem;font-weight:600;border:1px solid;margin-right:.35rem;margin-bottom:.25rem}
+.confirm-strip{position:sticky;bottom:0;padding:1rem 0;background:linear-gradient(to top,var(--bg) 60%,transparent)}
+.confirm-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.5rem;backdrop-filter:blur(20px)}
+
+/* ══════════════════════════════════
+   SCREEN 3 — HUB
+══════════════════════════════════ */
+.player-bar{display:flex;align-items:center;gap:.85rem;padding:.9rem 1.25rem;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);margin-bottom:1.5rem}
+.hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+@media(max-width:480px){.hub-grid{grid-template-columns:1fr}}
+.hub-card{cursor:pointer;border-radius:var(--r);padding:1.5rem;background:var(--surf);border:2px solid var(--border);transition:all .22s;text-align:center}
+.hub-card:hover{transform:translateY(-3px);border-color:var(--accent)}
+.hub-card.done{border-color:var(--green)}
+.hub-icon{font-size:2.2rem;display:block;margin-bottom:.5rem}
+.hub-name{font-family:'Bai Jamjuree',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:.3rem}
+.hub-desc{font-size:.82rem;color:var(--muted)}
+.hub-done{color:var(--green);font-size:.82rem;font-weight:600;margin-top:.5rem}
+
+/* ══════════════════════════════════
+   SCREEN 4 — DRAG & DROP MATCHING
+══════════════════════════════════ */
+.match-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.25rem}
+@media(max-width:560px){.match-layout{grid-template-columns:1fr}}
+
+/* Rights pool (left) */
+.rights-pool{display:flex;flex-direction:column;gap:.6rem}
+.drag-chip{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.75rem 1rem;border-radius:var(--rs);
+  background:var(--surf);border:1.5px solid var(--border);
+  font-size:.88rem;cursor:grab;user-select:none;
+  transition:all .2s;touch-action:none;
+}
+.drag-chip:hover{background:var(--surf2);border-color:var(--accent);transform:translateX(3px)}
+.drag-chip.dragging{opacity:.45;transform:scale(.95)}
+.drag-chip.used{opacity:.3;pointer-events:none;text-decoration:line-through}
+
+/* Drop zones (right) */
+.drop-zones{display:flex;flex-direction:column;gap:.6rem}
+.drop-zone{
+  min-height:56px;border-radius:var(--rs);
+  border:2px dashed var(--border);
+  padding:.6rem .9rem;
+  font-size:.85rem;color:var(--muted);
+  display:flex;align-items:center;gap:.6rem;
+  transition:all .2s;position:relative;
+}
+.drop-zone.drag-over{border-color:var(--accent);background:rgba(167,139,250,.1)}
+.drop-zone.filled{border-style:solid;border-color:var(--border);color:var(--text);background:var(--surf)}
+.drop-zone.correct{border-color:var(--green);background:rgba(52,211,153,.1);color:var(--green)}
+.drop-zone.wrong{border-color:var(--red);background:rgba(248,113,113,.1);color:var(--red)}
+.dz-label{font-size:.75rem;color:var(--muted);margin-bottom:.6rem;font-weight:600}
+.dz-remove{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:.1rem .3rem}
+.dz-remove:hover{color:var(--text)}
+
+.match-submit{margin-top:.5rem}
+.match-feedback{border-radius:var(--rs);padding:.85rem 1rem;font-size:.88rem;line-height:1.7;margin-bottom:1rem;display:none}
+.match-feedback.on{display:block}
+.match-feedback.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35);color:var(--green)}
+.match-feedback.bad{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:var(--red)}
+
+/* ══════════════════════════════════
+   SCREEN 5 — QUIZ
+══════════════════════════════════ */
+.q-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1rem}
+.q-label{font-size:.75rem;color:var(--muted);font-weight:600;margin-bottom:.5rem;letter-spacing:.04em}
+.q-text{font-family:'Bai Jamjuree',sans-serif;font-size:1.05rem;font-weight:700;line-height:1.55}
+.opts{display:flex;flex-direction:column;gap:.65rem;margin-bottom:1rem}
+.opt{width:100%;padding:.85rem 1rem;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--surf);color:var(--text);font-family:'Sarabun',sans-serif;font-size:.92rem;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:.75rem}
+.opt:hover:not(:disabled){border-color:var(--accent);background:var(--surf2);transform:translateX(4px)}
+.opt:disabled{cursor:default;transform:none}
+.opt.correct{border-color:var(--green);background:rgba(52,211,153,.12);color:var(--green)}
+.opt.wrong{border-color:var(--red);background:rgba(248,113,113,.12);color:var(--red)}
+.opt-l{width:26px;height:26px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:'Bai Jamjuree',sans-serif;font-size:.75rem;font-weight:700;flex-shrink:0}
+.fb{border-radius:var(--rs);padding:.85rem 1rem;font-size:.88rem;line-height:1.7;margin-bottom:1rem;display:none}
+.fb.on{display:block}
+.fb.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35);color:var(--green)}
+.fb.bad{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:var(--red)}
+
+/* ══════════════════════════════════
+   SCREEN 6 — RESULT
+══════════════════════════════════ */
+.result-hero{text-align:center;padding:2.5rem 1.5rem;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);margin-bottom:1.5rem;position:relative;overflow:hidden}
+.result-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(167,139,250,.15),transparent 70%)}
+.res-emoji{font-size:3.5rem;display:block;margin-bottom:.75rem;animation:float 3s ease-in-out infinite}
+.res-name{font-family:'Bai Jamjuree',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:1.25rem}
+.score-ring{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--pink));display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 1.25rem;box-shadow:0 0 50px rgba(167,139,250,.35);animation:pulse 3s ease-in-out infinite}
+.sr-n{font-family:'Bai Jamjuree',sans-serif;font-size:2.2rem;font-weight:700;color:#fff;line-height:1}
+.sr-t{font-size:.8rem;color:rgba(255,255,255,.8)}
+.grade{font-family:'Bai Jamjuree',sans-serif;font-size:1.15rem;font-weight:700}
+.breakdown{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.bk-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;text-align:center}
+.bk-icon{font-size:1.6rem}
+.bk-lbl{font-size:.78rem;color:var(--muted);margin:.3rem 0}
+.bk-val{font-family:'Bai Jamjuree',sans-serif;font-size:1.4rem;font-weight:700;color:var(--accent)}
+.rights-summary{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;margin-bottom:1.5rem}
+.ri{display:flex;align-items:flex-start;gap:.65rem;padding:.65rem;border-radius:var(--rs);background:rgba(255,255,255,.04);margin-bottom:.5rem;font-size:.85rem}
+.ri-lbl{font-weight:600;margin-bottom:.15rem}
+.ri-note{font-size:.78rem;color:var(--muted)}
+.cta-row{display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap}
+.confetti-p{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:999;animation:confetti linear forwards}
+</style>
+</head>
+<body>
+
+<!-- HEADER (shown on screens 2–6) -->
+<header class="hdr" id="globalHdr" style="display:none">
+  <div class="hdr-inner">
+    <span class="brand">🌐 สัญชาติเกม</span>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div class="hdr-player" id="hdrPlayer"><span>👤</span><span id="hdrName">—</span></div>
+      <div class="hdr-score" id="hdrScore" style="display:none">0 คะแนน</div>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════
+     SCREEN 1: LANDING + 3D
+════════════════════════════════ -->
+<div class="screen" id="sLand">
+  <canvas id="threeCanvas"></canvas>
+  <div class="land-bottom">
+    <h1 class="big-title fu">สัญชาติเกม</h1>
+    <p class="tagline fu d1">เรียนรู้เรื่องสัญชาติและสิทธิมนุษยชนผ่านการเล่น<br>สวมบทบาทตัวละครและค้นหาสิทธิ์ของคุณ!</p>
+    <div class="card fu d2">
+      <label style="font-family:'Bai Jamjuree',sans-serif;font-size:.85rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.55rem">ตั้งชื่อตัวละครของคุณ</label>
+      <div class="name-row">
+        <input class="inp" id="nameInp" placeholder="เช่น มีนา, ซาม่า, ปิ่น..." maxlength="16" autocomplete="off"/>
+        <button class="btn btn-p" id="nameBtn" disabled onclick="goRoles()">ต่อไป →</button>
+      </div>
+      <div style="font-size:.73rem;color:var(--muted);text-align:right;margin-top:.4rem"><span id="cc">0</span>/16</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:1.5rem;margin-top:1.25rem;flex-wrap:wrap">
+      <span style="font-size:.8rem;color:var(--muted)">🖐️ ลาก & วางสิทธิ์</span>
+      <span style="font-size:.8rem;color:var(--muted)">🧠 ตอบคำถาม</span>
+      <span style="font-size:.8rem;color:var(--muted)">🏆 ดูผลคะแนน</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN 2: ROLE SELECT
+════════════════════════════════ -->
+<div class="screen" id="sRoles">
+  <div class="wrap">
+    <div class="fu" style="margin-bottom:1.75rem">
+      <h2 style="font-size:1.4rem;margin-bottom:.3rem">เลือกตัวละครของคุณ</h2>
+      <p style="color:var(--muted);font-size:.88rem">แต่ละตัวละครมีสิทธิ์และข้อจำกัดที่แตกต่างกัน</p>
+    </div>
+    <div class="roles-grid" id="rolesGrid"></div>
+  </div>
+  <div class="confirm-strip">
+    <div style="max-width:900px;margin:0 auto;padding:0 1.25rem">
+      <div class="confirm-inner">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span style="font-size:1.9rem" id="prevEmoji">❓</span>
+          <div>
+            <div style="font-family:'Bai Jamjuree',sans-serif;font-weight:700;font-size:.95rem" id="prevName">ยังไม่ได้เลือก</div>
+            <div style="font-size:.76rem;color:var(--muted)" id="prevDesc">เลือกตัวละครเพื่อเริ่มเกม</div>
+          </div>
+        </div>
+        <button class="btn btn-p" id="confirmBtn" disabled onclick="goHub()">เริ่มเล่น →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN 3: GAME HUB
+════════════════════════════════ -->
+<div class="screen" id="sHub">
+  <div class="wrap">
+    <div class="player-bar fu">
+      <span style="font-size:2.2rem" id="hubEmoji"></span>
+      <div style="flex:1">
+        <div style="font-family:'Bai Jamjuree',sans-serif;font-weight:700" id="hubPN"></div>
+        <div style="font-size:.8rem;color:var(--muted)" id="hubRN"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Bai Jamjuree',sans-serif;font-size:1.4rem;font-weight:700;color:var(--accent)" id="hubSc">0</div>
+        <div style="font-size:.72rem;color:var(--muted)">คะแนน</div>
+      </div>
+    </div>
+    <h2 style="font-size:1.2rem;margin-bottom:.3rem" class="fu d1">เลือกมินิเกม</h2>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.1rem" class="fu d2">เล่นให้ครบทั้ง 2 เกมเพื่อดูผลลัพธ์สุดท้าย!</p>
+    <div class="hub-grid fu d2">
+      <div class="hub-card" id="hubM" onclick="startMatch()">
+        <span class="hub-icon">🖐️</span>
+        <div class="hub-name">ลาก & วางสิทธิ์</div>
+        <div class="hub-desc">ลากสิทธิ์ใส่ตัวละครที่มีสิทธิ์นั้น</div>
+        <div class="hub-done" id="mDone" style="display:none">✓ เล่นแล้ว</div>
+      </div>
+      <div class="hub-card" id="hubQ" onclick="startQuiz()">
+        <span class="hub-icon">🧠</span>
+        <div class="hub-name">ตอบคำถาม</div>
+        <div class="hub-desc">ทดสอบความรู้เรื่องสัญชาติในไทย</div>
+        <div class="hub-done" id="qDone" style="display:none">✓ เล่นแล้ว</div>
+      </div>
+    </div>
+    <div id="allDone" style="display:none;text-align:center;margin-top:1rem">
+      <button class="btn btn-p" onclick="goResult()">🏆 ดูผลคะแนนสุดท้าย →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN 4: DRAG & DROP MATCHING
+════════════════════════════════ -->
+<div class="screen" id="sMatch">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div>
+        <h2 style="font-size:1.2rem;margin-bottom:.2rem">🖐️ ลาก &amp; วางสิทธิ์</h2>
+        <p style="font-size:.8rem;color:var(--muted)">รอบที่ <span id="mRound">1</span>/<span id="mTotal">3</span></p>
+      </div>
+      <button class="btn" style="font-size:.8rem;padding:.45rem .9rem" onclick="goHub()">← กลับ</button>
+    </div>
+    <div class="pbar"><div class="pfill" id="mBar" style="width:0%"></div></div>
+
+    <!-- Instruction -->
+    <div class="card" style="margin-bottom:1rem;text-align:center">
+      <p style="font-size:.88rem;color:var(--muted);margin-bottom:.3rem">ลากสิทธิ์จากช้ายไปวางในช่องที่ตรงกับตัวละครที่ <strong style="color:var(--text)">มีสิทธิ์นั้น</strong></p>
+    </div>
+
+    <div class="match-layout">
+      <!-- Left: draggable chips -->
+      <div>
+        <div class="dz-label">🃏 สิทธิ์ทั้งหมด (ลากใส่ช่องขวา)</div>
+        <div class="rights-pool" id="rightsPool"></div>
+      </div>
+      <!-- Right: drop zones per role -->
+      <div>
+        <div class="dz-label">👥 ตัวละคร (วางสิทธิ์ที่มีลงมา)</div>
+        <div class="drop-zones" id="dropZones"></div>
+      </div>
+    </div>
+
+    <div class="match-feedback" id="mFb"></div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button class="btn btn-p match-submit" id="mSubmit" onclick="submitMatch()" disabled>ตรวจคำตอบ ✓</button>
+      <button class="btn" id="mNext" style="display:none" onclick="nextMatch()">ถัดไป →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN 5: QUIZ
+════════════════════════════════ -->
+<div class="screen" id="sQuiz">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div>
+        <h2 style="font-size:1.2rem;margin-bottom:.2rem">🧠 ตอบคำถาม</h2>
+        <p style="font-size:.8rem;color:var(--muted)" id="qProg">ข้อ 1/6</p>
+      </div>
+      <button class="btn" style="font-size:.8rem;padding:.45rem .9rem" onclick="goHub()">← กลับ</button>
+    </div>
+    <div class="pbar"><div class="pfill" id="qBar" style="width:0%"></div></div>
+    <div class="q-card">
+      <div class="q-label" id="qLbl">คำถามที่ 1</div>
+      <div class="q-text" id="qText"></div>
+    </div>
+    <div class="opts" id="qOpts"></div>
+    <div class="fb" id="qFb"></div>
+    <button class="btn btn-p" id="qNext" style="display:none;width:100%" onclick="nextQ()">ข้อถัดไป →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN 6: RESULT
+════════════════════════════════ -->
+<div class="screen" id="sResult">
+  <div class="wrap">
+    <div class="result-hero fu">
+      <span class="res-emoji" id="resE"></span>
+      <p style="color:var(--muted);font-size:.9rem">ยินดีด้วย!</p>
+      <div class="res-name" id="resN"></div>
+      <div class="score-ring">
+        <div class="sr-n" id="resNum">0</div>
+        <div class="sr-t" id="resTot">/0</div>
+      </div>
+      <div style="color:var(--muted);font-size:.9rem;margin-bottom:.3rem" id="resPct"></div>
+      <div class="grade" id="resGrade"></div>
+    </div>
+    <div class="breakdown fu d1">
+      <div class="bk-card">
+        <div class="bk-icon">🖐️</div>
+        <div class="bk-lbl">ลากวางสิทธิ์</div>
+        <div class="bk-val" id="resMSc">—</div>
+      </div>
+      <div class="bk-card">
+        <div class="bk-icon">🧠</div>
+        <div class="bk-lbl">ตอบคำถาม</div>
+        <div class="bk-val" id="resQSc">—</div>
+      </div>
+    </div>
+    <div class="rights-summary fu d2">
+      <div style="font-family:'Bai Jamjuree',sans-serif;font-weight:700;font-size:.95rem;margin-bottom:.85rem" id="resST"></div>
+      <div id="resSumEl"></div>
+    </div>
+    <div class="cta-row fu d3">
+      <button class="btn btn-p" onclick="playAgain()">🔄 เล่นอีกครั้ง</button>
+      <button class="btn" onclick="tryOther()">🔀 ลองตัวละครอื่น</button>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════
+const ROLES=[
+  {id:"thai",name:"คนไทยโดยกำเนิด",emoji:"🌟",color:"#F59E0B",desc:"เกิดในไทย พ่อแม่เป็นคนไทย มีสูติบัตรและบัตรประชาชน",badge:"สัญชาติไทย",diff:"ง่าย"},
+  {id:"migrant",name:"แรงงานข้ามชาติ",emoji:"🧳",color:"#3B82F6",desc:"มาจากประเทศเพื่อนบ้าน ทำงานในไทยอย่างถูกกฎหมาย",badge:"ใบอนุญาตทำงาน",diff:"ปานกลาง"},
+  {id:"stateless",name:"บุคคลไร้สัญชาติ",emoji:"🌍",color:"#8B5CF6",desc:"เกิดในไทยแต่ไม่ได้รับการรับรองสัญชาติ ถือบัตรพิเศษ",badge:"บัตรประจำตัว",diff:"ยาก"},
+  {id:"halfblood",name:"ลูกครึ่ง",emoji:"🌏",color:"#EC4899",desc:"เกิดในไทย พ่อหรือแม่คนใดคนหนึ่งเป็นคนต่างชาติ",badge:"สองสัญชาติ",diff:"ปานกลาง"},
+  {id:"refugee",name:"ผู้ลี้ภัย",emoji:"🕊️",color:"#10B981",desc:"หนีภัยสงครามหรือการประหัตประหาร ได้รับการคุ้มครองชั่วคราว",badge:"บัตรผู้ลี้ภัย",diff:"ยาก"},
+];
+
+// MATCHING ROUNDS — each round: a right → which roles have it
+const MATCH_ROUNDS=[
+  {
+    right:"เข้าเรียนในโรงเรียนรัฐบาลได้",icon:"🏫",
+    owners:["thai","migrant","stateless","halfblood","refugee"],
+    note:"เด็กทุกคนในราชอาณาจักรมีสิทธิ์รับการศึกษา ไม่ว่าจะมีสัญชาติหรือไม่"
+  },
+  {
+    right:"มีบัตรประชาชนเลข 13 หลัก",icon:"🪪",
+    owners:["thai","halfblood"],
+    note:"บัตรประชาชน 13 หลักสงวนสำหรับผู้มีสัญชาติไทย ส่วนคนอื่นได้บัตรพิเศษ"
+  },
+  {
+    right:"ออกเดินทางข้ามจังหวัดได้อิสระ",icon:"🚌",
+    owners:["thai","halfblood"],
+    note:"แรงงานข้ามชาติ ผู้ลี้ภัย และไร้สัญชาติมีข้อจำกัดพื้นที่อยู่อาศัย"
+  },
+  {
+    right:"เข้ารับการรักษาพยาบาลฉุกเฉินได้",icon:"🏥",
+    owners:["thai","migrant","stateless","halfblood","refugee"],
+    note:"สิทธิ์รักษาฉุกเฉินเป็นสิทธิมนุษยชนขั้นพื้นฐาน โรงพยาบาลต้องรับทุกคน"
+  },
+  {
+    right:"ลงคะแนนเสียงเลือกตั้งได้",icon:"🗳️",
+    owners:["thai","halfblood"],
+    note:"สิทธิ์เลือกตั้งสงวนสำหรับผู้มีสัญชาติไทยเท่านั้น อายุ 18 ปีขึ้นไป"
+  },
+  {
+    right:"เปิดบัญชีธนาคารได้",icon:"🏦",
+    owners:["thai","migrant","halfblood"],
+    note:"แรงงานถูกกฎหมายใช้ Passport+WorkPermit เปิดบัญชีได้ แต่ไร้สัญชาติและผู้ลี้ภัยมักถูกปฏิเสธ"
+  },
+];
+
+const QUIZ=[
+  {q:"เด็กที่เกิดในไทยจากพ่อแม่แรงงานต่างด้าว จะได้รับสิทธิ์ข้อใดโดยอัตโนมัติ?",opts:["สัญชาติไทย","สิทธิ์รับการศึกษา","บัตรประชาชน","สิทธิ์เลือกตั้ง"],c:1,exp:"ตามนโยบายไทย เด็กทุกคนในราชอาณาจักรมีสิทธิ์เรียนในโรงเรียนรัฐบาลฟรี ไม่ว่าจะมีสถานะใด"},
+  {q:"บุคคลไร้สัญชาติมักถือบัตรที่ขึ้นต้นด้วยตัวเลขใด?",opts:["1","3","0 หรือ 6","9"],c:2,exp:"บัตรขึ้นต้น 0 หรือ 6 ใช้ระบุบุคคลที่ไม่มีสัญชาติไทยหรืออยู่ระหว่างพิสูจน์สัญชาติ"},
+  {q:"สิทธิ์ใดที่รัฐธรรมนูญไทยรับรองให้กับ 'ทุกคน' ไม่ว่าจะมีสัญชาติหรือไม่?",opts:["สิทธิ์เลือกตั้ง","สิทธิ์ซื้อที่ดิน","สิทธิ์ในชีวิตและร่างกาย","ประกอบอาชีพอิสระ"],c:2,exp:"รัฐธรรมนูญรับรองสิทธิ์ในชีวิตและร่างกายให้ทุกคน โดยไม่จำกัดเฉพาะพลเมืองไทย"},
+  {q:"แรงงานข้ามชาติถูกกฎหมายในไทย ไม่มีสิทธิ์ในข้อใด?",opts:["ประกันสังคม","ค่าแรงขั้นต่ำ","ลงคะแนนเลือกตั้ง","รักษาพยาบาลฉุกเฉิน"],c:2,exp:"สิทธิ์เลือกตั้งสงวนสำหรับผู้ถือสัญชาติไทยเท่านั้น แรงงานถูกกฎหมายมีสิทธิ์ประกันสังคมและค่าแรงขั้นต่ำ"},
+  {q:"องค์กรใดที่ทำหน้าที่ดูแลและคุ้มครองผู้ลี้ภัยในไทย?",opts:["UNESCO","UNICEF","UNHCR","WHO"],c:2,exp:"UNHCR (สำนักงานข้าหลวงใหญ่ผู้ลี้ภัยแห่งสหประชาชาติ) เป็นองค์กรหลักดูแลผู้ลี้ภัยในไทย"},
+  {q:"ขั้นตอนแรกในการขอพิสูจน์สัญชาติสำหรับบุคคลไร้สัญชาติคืออะไร?",opts:["ยื่นคำร้องต่อศาล","รวบรวมหลักฐานความเกี่ยวข้องกับไทย","ชำระค่าธรรมเนียมที่เขต","ขอหนังสือรับรองจากสถานทูต"],c:1,exp:"การพิสูจน์สัญชาติเริ่มจากรวบรวมหลักฐาน เช่น สูติบัตร ทะเบียนบ้าน เอกสารว่าพ่อแม่อยู่ไทยมานาน"},
+];
+
+// ══════════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════════
+let G={name:"",roleId:null,mDone:false,qDone:false,mEarned:0,qEarned:0};
+let mRoundIdx=0,mEarnedThisGame=0;
+let qIdx=0,qEarnedThisGame=0,qAnswered=false;
+// matching drag state
+let draggedId=null;
+// drop assignments: zoneId (roleId) → rightIndex
+let dropAssign={};
+
+const LT=["ก","ข","ค","ง"];
+
+// ══════════════════════════════════════════════════════════════
+//  THREE.JS 3D CHARACTER
+// ══════════════════════════════════════════════════════════════
+(function init3D(){
+  const canvas=document.getElementById('threeCanvas');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(50,canvas.clientWidth/380,0.1,100);
+  camera.position.set(0,1.6,5.5);
+
+  // Resize
+  function resize(){
+    const w=canvas.parentElement.clientWidth;
+    renderer.setSize(w,380);
+    camera.aspect=w/380;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff,0.7));
+  const dir=new THREE.DirectionalLight(0xffffff,1.2);
+  dir.position.set(3,5,4);
+  dir.castShadow=true;
+  scene.add(dir);
+  const fill=new THREE.DirectionalLight(0xa78bfa,0.5);
+  fill.position.set(-4,2,-2);
+  scene.add(fill);
+
+  // Floating particles
+  const ptGeo=new THREE.BufferGeometry();
+  const pts=[];
+  for(let i=0;i<120;i++){
+    pts.push((Math.random()-0.5)*10,(Math.random()-0.5)*8,(Math.random()-0.5)*6);
+  }
+  ptGeo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
+  const ptMat=new THREE.PointsMaterial({color:0xa78bfa,size:0.06,transparent:true,opacity:0.6});
+  scene.add(new THREE.Points(ptGeo,ptMat));
+
+  // ── Character group ──
+  const charGroup=new THREE.Group();
+  scene.add(charGroup);
+
+  // Body materials
+  const skinMat=new THREE.MeshLambertMaterial({color:0xFFD5A8});
+  const bodyMat=new THREE.MeshLambertMaterial({color:0x7C3AED});
+  const hairMat=new THREE.MeshLambertMaterial({color:0x2D1B69});
+  const whiteMat=new THREE.MeshLambertMaterial({color:0xffffff});
+  const eyeMat=new THREE.MeshLambertMaterial({color:0x1a1a2e});
+
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.42,32,32),skinMat);
+  head.position.y=1.55;
+  head.castShadow=true;
+  charGroup.add(head);
+
+  // Hair
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(0.44,32,16,0,Math.PI*2,0,Math.PI*0.52),hairMat);
+  hair.position.y=1.72;
+  charGroup.add(hair);
+
+  // Eyes
+  [-0.14,0.14].forEach(x=>{
+    const eyeW=new THREE.Mesh(new THREE.SphereGeometry(0.09,16,16),whiteMat);
+    eyeW.position.set(x,1.57,0.36);
+    charGroup.add(eyeW);
+    const eyeP=new THREE.Mesh(new THREE.SphereGeometry(0.055,16,16),eyeMat);
+    eyeP.position.set(x,1.57,0.44);
+    charGroup.add(eyeP);
+  });
+
+  // Smile
+  const smileCurve=new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(-0.12,1.47,0.41),
+    new THREE.Vector3(0,1.43,0.43),
+    new THREE.Vector3(0.12,1.47,0.41)
+  );
+  const smilePts=smileCurve.getPoints(12);
+  const smileGeo=new THREE.BufferGeometry().setFromPoints(smilePts);
+  const smileLine=new THREE.Line(smileGeo,new THREE.LineBasicMaterial({color:0x8B4513,linewidth:2}));
+  charGroup.add(smileLine);
+
+  // Body
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.38,0.85,32),bodyMat);
+  body.position.y=0.78;
+  body.castShadow=true;
+  charGroup.add(body);
+
+  // Neck
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.12,0.2,16),skinMat);
+  neck.position.y=1.2;
+  charGroup.add(neck);
+
+  // Arms
+  [-1,1].forEach(side=>{
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.085,0.55,16),bodyMat);
+    arm.position.set(side*0.48,0.88,0);
+    arm.rotation.z=side*0.35;
+    arm.castShadow=true;
+    charGroup.add(arm);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.1,16,16),skinMat);
+    hand.position.set(side*0.62,0.63,0);
+    charGroup.add(hand);
+  });
+
+  // Legs
+  [-1,1].forEach(side=>{
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.1,0.6,16),new THREE.MeshLambertMaterial({color:0x1e1b4b}));
+    leg.position.set(side*0.17,0.1,0);
+    leg.castShadow=true;
+    charGroup.add(leg);
+    const foot=new THREE.Mesh(new THREE.SphereGeometry(0.13,16,16),new THREE.MeshLambertMaterial({color:0x111827}));
+    foot.position.set(side*0.18,-0.22,0.05);
+    charGroup.add(foot);
+  });
+
+  // Platform
+  const plat=new THREE.Mesh(
+    new THREE.CylinderGeometry(0.65,0.65,0.08,48),
+    new THREE.MeshLambertMaterial({color:0x4c1d95,transparent:true,opacity:0.7})
+  );
+  plat.position.y=-0.27;
+  charGroup.add(plat);
+
+  // Name tag (canvas texture)
+  let nameTag=null;
+  function buildNameTag(txt){
+    if(nameTag)charGroup.remove(nameTag);
+    if(!txt)return;
+    const c=document.createElement('canvas');c.width=256;c.height=64;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='rgba(167,139,250,0.92)';
+    roundRect(ctx,4,4,248,56,12);
+    ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.font='bold 28px Bai Jamjuree, sans-serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(txt,128,32);
+    const tex=new THREE.CanvasTexture(c);
+    const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide});
+    const geo=new THREE.PlaneGeometry(1.1,0.28);
+    nameTag=new THREE.Mesh(geo,mat);
+    nameTag.position.set(0,2.15,0);
+    charGroup.add(nameTag);
+  }
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  }
+
+  // Update name from input live
+  const ni=document.getElementById('nameInp');
+  ni.addEventListener('input',()=>buildNameTag(ni.value.trim()));
+
+  // Mouse orbit
+  let isDrag=false,prevMX=0;
+  let targetRotY=0,currentRotY=0;
+  canvas.addEventListener('mousedown',e=>{isDrag=true;prevMX=e.clientX});
+  window.addEventListener('mouseup',()=>isDrag=false);
+  window.addEventListener('mousemove',e=>{
+    if(isDrag){targetRotY+=(e.clientX-prevMX)*0.012;prevMX=e.clientX;}
+  });
+  canvas.addEventListener('touchstart',e=>{isDrag=true;prevMX=e.touches[0].clientX},{passive:true});
+  window.addEventListener('touchend',()=>isDrag=false);
+  window.addEventListener('touchmove',e=>{
+    if(isDrag){targetRotY+=(e.touches[0].clientX-prevMX)*0.012;prevMX=e.touches[0].clientX;}
+  },{passive:true});
+
+  let t=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    t+=0.016;
+    currentRotY+=(targetRotY-currentRotY)*0.08;
+    charGroup.rotation.y=currentRotY;
+    charGroup.position.y=Math.sin(t*1.1)*0.06;
+    // particle drift
+    const pos=ptGeo.attributes.position.array;
+    for(let i=1;i<pos.length;i+=3){pos[i]+=0.003;if(pos[i]>4)pos[i]=-4;}
+    ptGeo.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.buildNameTag3D=buildNameTag;
+})();
+
+// ══════════════════════════════════════════════════════════════
+//  SCREEN UTILS
+// ══════════════════════════════════════════════════════════════
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  const inGame=['sRoles','sHub','sMatch','sQuiz','sResult'].includes(id);
+  document.getElementById('globalHdr').style.display=inGame?'':'none';
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LANDING
+// ══════════════════════════════════════════════════════════════
+show('sLand');
+const ni=document.getElementById('nameInp');
+ni.addEventListener('input',()=>{
+  const v=ni.value.trim();
+  document.getElementById('cc').textContent=ni.value.length;
+  document.getElementById('nameBtn').disabled=v.length<1;
+});
+ni.addEventListener('keydown',e=>{if(e.key==='Enter'&&ni.value.trim())goRoles()});
+
+function goRoles(){
+  G.name=ni.value.trim();if(!G.name)return;
+  document.getElementById('hdrName').textContent=G.name;
+  buildRoles();show('sRoles');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ROLE SELECT
+// ══════════════════════════════════════════════════════════════
+function buildRoles(){
+  const grid=document.getElementById('rolesGrid');grid.innerHTML='';
+  const dmap={ง่าย:{s:'color:#059669;border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.1)',t:'⭐ ง่าย'},ปานกลาง:{s:'color:#d97706;border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.1)',t:'⭐⭐ ปานกลาง'},ยาก:{s:'color:#dc2626;border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.1)',t:'⭐⭐⭐ ยาก'}};
+  ROLES.forEach((r,i)=>{
+    const d=dmap[r.diff];
+    const el=document.createElement('div');el.className='role-card';el.dataset.id=r.id;
+    el.style.animationDelay=`${i*0.07}s`;el.classList.add('fu');
+    el.innerHTML=`<div class="rc-check">✓</div><span class="re">${r.emoji}</span><div class="rn">${r.name}</div><div class="rd">${r.desc}</div>
+      <span class="rb" style="color:${r.color};border-color:${r.color}44;background:${r.color}1a">🪪 ${r.badge}</span>
+      <span class="rb" style="${d.s}">${d.t}</span>`;
+    el.addEventListener('click',()=>selRole(r.id));
+    grid.appendChild(el);
+  });
+}
+function selRole(id){
+  G.roleId=id;const r=ROLES.find(x=>x.id===id);
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.toggle('sel',c.dataset.id===id));
+  document.getElementById('prevEmoji').textContent=r.emoji;
+  document.getElementById('prevName').textContent=`${G.name} — ${r.name}`;
+  document.getElementById('prevDesc').textContent=r.desc;
+  document.getElementById('confirmBtn').disabled=false;
+}
+function goHub(){
+  const r=ROLES.find(x=>x.id===G.roleId);
+  document.getElementById('hubEmoji').textContent=r.emoji;
+  document.getElementById('hubPN').textContent=G.name;
+  document.getElementById('hubRN').textContent=r.name;
+  document.getElementById('hdrScore').style.display='';
+  refreshHub();show('sHub');
+}
+function refreshHub(){
+  const sc=G.mEarned+G.qEarned;
+  document.getElementById('hubSc').textContent=sc;
+  document.getElementById('hdrScore').textContent=sc+' คะแนน';
+  document.getElementById('mDone').style.display=G.mDone?'':'none';
+  document.getElementById('qDone').style.display=G.qDone?'':'none';
+  if(G.mDone)document.getElementById('hubM').classList.add('done');
+  if(G.qDone)document.getElementById('hubQ').classList.add('done');
+  document.getElementById('allDone').style.display=(G.mDone&&G.qDone)?'':'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MATCHING GAME — drag & drop
+// ══════════════════════════════════════════════════════════════
+// We group rights into 3 rounds of 2 rights each
+const MATCH_GROUPS=[[0,1],[2,3],[4,5]]; // indices into MATCH_ROUNDS
+
+function startMatch(){
+  mRoundIdx=0;mEarnedThisGame=0;dropAssign={};
+  renderMatchRound();show('sMatch');
+}
+
+function renderMatchRound(){
+  const g=MATCH_GROUPS[mRoundIdx];
+  const roundRights=g.map(i=>MATCH_ROUNDS[i]);
+  dropAssign={};
+
+  document.getElementById('mRound').textContent=mRoundIdx+1;
+  document.getElementById('mTotal').textContent=MATCH_GROUPS.length;
+  document.getElementById('mBar').style.width=`${(mRoundIdx/MATCH_GROUPS.length)*100}%`;
+
+  const fb=document.getElementById('mFb');fb.className='match-feedback';fb.innerHTML='';
+  document.getElementById('mNext').style.display='none';
+  document.getElementById('mSubmit').disabled=true;
+  document.getElementById('mSubmit').style.display='';
+
+  // Build draggable chips (the rights)
+  const pool=document.getElementById('rightsPool');pool.innerHTML='';
+  roundRights.forEach((rr,idx)=>{
+    const chip=document.createElement('div');
+    chip.className='drag-chip';chip.dataset.ridx=g[idx];
+    chip.innerHTML=`<span>${rr.icon}</span><span>${rr.right}</span>`;
+    chip.draggable=true;
+    chip.addEventListener('dragstart',e=>{
+      draggedId=g[idx];chip.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    chip.addEventListener('dragend',()=>chip.classList.remove('dragging'));
+    // Touch drag
+    addTouchDrag(chip,g[idx]);
+    pool.appendChild(chip);
+  });
+
+  // Build drop zones (the roles)
+  const zones=document.getElementById('dropZones');zones.innerHTML='';
+  ROLES.forEach(r=>{
+    const dz=document.createElement('div');
+    dz.className='drop-zone';dz.dataset.roleId=r.id;
+    dz.innerHTML=`<span style="font-size:1.3rem">${r.emoji}</span><span style="color:var(--muted);font-size:.83rem">${r.name}<br><span style="font-size:.75rem">วางสิทธิ์ที่มีลงที่นี่</span></span>`;
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');handleDrop(dz,draggedId)});
+    zones.appendChild(dz);
+  });
+}
+
+function handleDrop(dz,ridx){
+  if(ridx===null||ridx===undefined)return;
+  const roleId=dz.dataset.roleId;
+  // Allow multiple rights per zone; store as array
+  if(!dropAssign[roleId])dropAssign[roleId]=[];
+  // Avoid duplicates
+  if(dropAssign[roleId].includes(ridx))return;
+  dropAssign[roleId].push(ridx);
+
+  // Mark chip as used
+  const chip=document.querySelector(`.drag-chip[data-ridx="${ridx}"]`);
+  if(chip)chip.classList.add('used');
+
+  // Show in zone
+  const rr=MATCH_ROUNDS[ridx];
+  const tag=document.createElement('div');
+  tag.style.cssText='display:flex;align-items:center;gap:.4rem;background:var(--surf2);border-radius:6px;padding:.2rem .5rem;font-size:.78rem;margin:.2rem 0;';
+  tag.innerHTML=`${rr.icon} ${rr.right} <button style="background:none;border:none;color:var(--muted);cursor:pointer;margin-left:auto;font-size:.85rem" onclick="removeTag(this,'${roleId}',${ridx})">✕</button>`;
+  // Remove placeholder text if first drop
+  if(dropAssign[roleId].length===1)dz.innerHTML='';
+  dz.classList.add('filled');
+  dz.appendChild(tag);
+
+  draggedId=null;
+  checkSubmitReady();
+}
+
+function removeTag(btn,roleId,ridx){
+  btn.parentElement.remove();
+  if(dropAssign[roleId])dropAssign[roleId]=dropAssign[roleId].filter(x=>x!==ridx);
+  // Un-use chip
+  const chip=document.querySelector(`.drag-chip[data-ridx="${ridx}"]`);
+  if(chip)chip.classList.remove('used');
+  // Restore placeholder if empty
+  const dz=document.querySelector(`.drop-zone[data-role-id="${roleId}"]`);
+  if(dz&&(!dropAssign[roleId]||dropAssign[roleId].length===0)){
+    const r=ROLES.find(x=>x.id===roleId);
+    dz.innerHTML=`<span style="font-size:1.3rem">${r.emoji}</span><span style="color:var(--muted);font-size:.83rem">${r.name}<br><span style="font-size:.75rem">วางสิทธิ์ที่มีลงที่นี่</span></span>`;
+    dz.classList.remove('filled');
+  }
+  checkSubmitReady();
+}
+
+function checkSubmitReady(){
+  // Ready when at least one drop has been made
+  const hasAny=Object.values(dropAssign).some(v=>v&&v.length>0);
+  document.getElementById('mSubmit').disabled=!hasAny;
+}
+
+// Touch drag helpers
+function addTouchDrag(chip,ridx){
+  let clone=null,startX,startY;
+  chip.addEventListener('touchstart',e=>{
+    startX=e.touches[0].clientX;startY=e.touches[0].clientY;
+    clone=chip.cloneNode(true);
+    clone.style.cssText+=`;position:fixed;pointer-events:none;z-index:9999;opacity:.85;width:${chip.offsetWidth}px;transform:scale(1.05)`;
+    document.body.appendChild(clone);
+    draggedId=ridx;
+  },{passive:true});
+  chip.addEventListener('touchmove',e=>{
+    if(!clone)return;
+    const t=e.touches[0];
+    clone.style.left=`${t.clientX-chip.offsetWidth/2}px`;
+    clone.style.top=`${t.clientY-30}px`;
+    // Highlight drop zone
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    document.querySelectorAll('.drop-zone').forEach(z=>z.classList.remove('drag-over'));
+    const dz=el&&el.closest('.drop-zone');if(dz)dz.classList.add('drag-over');
+  },{passive:true});
+  chip.addEventListener('touchend',e=>{
+    if(clone){clone.remove();clone=null;}
+    const t=e.changedTouches[0];
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    const dz=el&&el.closest('.drop-zone');
+    document.querySelectorAll('.drop-zone').forEach(z=>z.classList.remove('drag-over'));
+    if(dz)handleDrop(dz,ridx);
+    draggedId=null;
+  });
+}
+
+function submitMatch(){
+  const g=MATCH_GROUPS[mRoundIdx];
+  let roundEarned=0,total=0;
+  const msgs=[];
+
+  g.forEach(ridx=>{
+    const rr=MATCH_ROUNDS[ridx];
+    // For each right, check each role
+    ROLES.forEach(r=>{
+      total++;
+      const playerSaidHas=(dropAssign[r.id]||[]).includes(ridx);
+      const actualHas=rr.owners.includes(r.id);
+      if(playerSaidHas===actualHas){
+        roundEarned++;
+        // Correct: highlight zone green
+      }
+    });
+    msgs.push(`${rr.icon} <strong>${rr.right}</strong>: ${rr.owners.map(id=>ROLES.find(x=>x.id===id).emoji).join('')} — ${rr.note}`);
+  });
+
+  mEarnedThisGame+=roundEarned;
+  // Color zones
+  document.querySelectorAll('.drop-zone').forEach(dz=>{
+    const roleId=dz.dataset.roleId;
+    const placed=dropAssign[roleId]||[];
+    // Check if all placed rights are correct AND all correct rights were placed
+    let allOk=true;
+    g.forEach(ridx=>{
+      const rr=MATCH_ROUNDS[ridx];
+      const shouldHave=rr.owners.includes(roleId);
+      const didPlace=placed.includes(ridx);
+      if(shouldHave!==didPlace)allOk=false;
+    });
+    dz.classList.add(allOk?'correct':'wrong');
+  });
+
+  const fb=document.getElementById('mFb');
+  fb.className='match-feedback on ok';
+  fb.innerHTML=`<strong>เฉลย:</strong><br>${msgs.join('<br>')}`;
+  document.getElementById('mSubmit').style.display='none';
+  const nb=document.getElementById('mNext');nb.style.display='';
+  nb.textContent=mRoundIdx>=MATCH_GROUPS.length-1?'🏁 จบเกม':'รอบถัดไป →';
+}
+
+function nextMatch(){
+  mRoundIdx++;
+  if(mRoundIdx>=MATCH_GROUPS.length){
+    G.mDone=true;G.mEarned=mEarnedThisGame;
+    refreshHub();goHub();
+  } else {
+    renderMatchRound();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  QUIZ
+// ══════════════════════════════════════════════════════════════
+function startQuiz(){qIdx=0;qEarnedThisGame=0;renderQ();show('sQuiz');}
+function renderQ(){
+  const q=QUIZ[qIdx];qAnswered=false;
+  document.getElementById('qProg').textContent=`ข้อ ${qIdx+1}/${QUIZ.length}`;
+  document.getElementById('qBar').style.width=`${(qIdx/QUIZ.length)*100}%`;
+  document.getElementById('qLbl').textContent=`คำถามที่ ${qIdx+1}`;
+  document.getElementById('qText').textContent=q.q;
+  const opts=document.getElementById('qOpts');opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');b.className='opt';
+    b.innerHTML=`<span class="opt-l">${LT[i]}</span>${o}`;
+    b.addEventListener('click',()=>answerQ(i));
+    opts.appendChild(b);
+  });
+  const fb=document.getElementById('qFb');fb.className='fb';fb.innerHTML='';
+  document.getElementById('qNext').style.display='none';
+}
+function answerQ(idx){
+  if(qAnswered)return;qAnswered=true;
+  const q=QUIZ[qIdx];const ok=idx===q.c;
+  document.querySelectorAll('#qOpts .opt').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.c)b.classList.add('correct');
+    else if(i===idx&&!ok)b.classList.add('wrong');
+  });
+  if(ok)qEarnedThisGame++;
+  const fb=document.getElementById('qFb');
+  fb.className='fb on '+(ok?'ok':'bad');
+  fb.innerHTML=(ok?'✅ ถูกต้อง! ':'❌ ไม่ถูก! ')+q.exp;
+  const nb=document.getElementById('qNext');nb.style.display='';
+  nb.textContent=qIdx>=QUIZ.length-1?'🏁 ดูผลเกม':'ข้อถัดไป →';
+}
+function nextQ(){
+  qIdx++;
+  if(qIdx>=QUIZ.length){G.qDone=true;G.qEarned=qEarnedThisGame;refreshHub();goHub();}
+  else renderQ();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RESULT
+// ══════════════════════════════════════════════════════════════
+function goResult(){
+  const r=ROLES.find(x=>x.id===G.roleId);
+  const total=MATCH_ROUNDS.length*ROLES.length+QUIZ.length;
+  const earned=G.mEarned+G.qEarned;
+  const pct=Math.round((earned/total)*100);
+  document.getElementById('resE').textContent=r.emoji;
+  document.getElementById('resN').textContent=`${G.name} — ${r.name}`;
+  document.getElementById('resNum').textContent=earned;
+  document.getElementById('resTot').textContent='/'+total;
+  document.getElementById('resPct').textContent=pct+'%';
+  document.getElementById('resMSc').textContent=G.mEarned;
+  document.getElementById('resQSc').textContent=G.qEarned+'/'+QUIZ.length;
+  const grades=[{min:80,l:'🥇 ยอดเยี่ยม! เจ้าผู้รู้แห่งสิทธิ',c:'#FBBF24'},{min:60,l:'🥈 ดีมาก! เริ่มเข้าใจสิทธิแล้ว',c:'#a78bfa'},{min:40,l:'🥉 พอใช้ได้! ยังมีอะไรให้เรียนรู้',c:'#34d399'},{min:0,l:'📚 ลองอีกครั้ง! ความรู้สร้างความเข้าใจ',c:'#f87171'}];
+  const g=grades.find(x=>pct>=x.min);
+  const ge=document.getElementById('resGrade');ge.textContent=g.l;ge.style.color=g.c;
+  document.getElementById('resST').innerHTML=`${r.emoji} สิทธิ์ของ${r.name}ในประเทศไทย`;
+  const el=document.getElementById('resSumEl');el.innerHTML='';
+  MATCH_ROUNDS.forEach(m=>{
+    const has=m.owners.includes(G.roleId);
+    const d=document.createElement('div');d.className='ri';
+    d.innerHTML=`<span style="font-size:1rem;flex-shrink:0;margin-top:1px">${has?'✅':'❌'}</span><div><div class="ri-lbl">${m.icon} ${m.right}</div><div class="ri-note">${has?'มีสิทธิ์นี้':'ไม่มีสิทธิ์นี้'} — ${m.note}</div></div>`;
+    el.appendChild(d);
+  });
+  show('sResult');
+  if(pct>=60){
+    const cols=['#a78bfa','#f472b6','#34d399','#fbbf24','#60a5fa'];
+    for(let i=0;i<60;i++){
+      setTimeout(()=>{
+        const c=document.createElement('div');c.className='confetti-p';
+        c.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${cols[Math.floor(Math.random()*cols.length)]};width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()}s`;
+        document.body.appendChild(c);setTimeout(()=>c.remove(),5000);
+      },i*35);
+    }
+  }
+}
+
+function playAgain(){G.mDone=false;G.qDone=false;G.mEarned=0;G.qEarned=0;goHub();}
+function tryOther(){G.mDone=false;G.qDone=false;G.mEarned=0;G.qEarned=0;G.roleId=null;buildRoles();show('sRoles');}
+</script>
+</body>
+</html>
